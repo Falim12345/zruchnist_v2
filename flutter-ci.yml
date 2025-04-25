@@ -1,0 +1,95 @@
+name: ZruchnistV2CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - '**.yml'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - '**.yml'
+      - '.github/workflows/**'
+jobs:
+  flutter-android:
+    name: Analyze, Test & Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: ${{ runner.os }}-pub-
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.13.0'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format . --set-exit-if-changed
+
+      - name: Analyze Dart code
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      - name: Install lcov
+        run: sudo apt-get install -y lcov
+
+      - name: Generate HTML coverage report
+        run: |
+          genhtml coverage/lcov.info -o coverage/html
+          echo "Coverage report generated at coverage/html/index.html"
+
+      - name: Upload HTML coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: html-coverage-report
+          path: coverage/html
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: APK size
+        run: |
+          apk_size=$(du -h build/app/outputs/flutter-apk/app-release.apk | cut -f1)
+          echo "📦 APK size: $apk_size"
+
+      - name: Check if APK exists before uploading
+        run: |
+          if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
+            echo "APK found, proceeding with upload."
+          else
+            echo "APK not found, skipping upload."
+            exit 1
+          fi
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload test logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: failed-test-logs
+          path: |
+            build/test/
+            .dart_tool/test/
