@@ -1,4 +1,5 @@
-name: ZruchnistV2CI
+name: zruchnist_v2_CICD
+
 
 on:
   push:
