@@ -1,0 +1,12 @@
+name: zruchnist_v2
+
+packages:
+  - packages/app 
+  - packages/firebase
+  - packages/core
+  - packages/presentation
+  - packages/domain
+  - packages/data
+  
+scripts:
+  check: ./scripts/check_dependencies.sh
