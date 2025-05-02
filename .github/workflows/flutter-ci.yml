@@ -57,7 +57,7 @@ jobs:
           echo "Coverage report generated at coverage/html/index.html"
 
       - name: Upload HTML coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: html-coverage-report
           path: coverage/html
@@ -81,14 +81,14 @@ jobs:
 
       - name: Upload APK
         if: success()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload test logs (on failure)
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: failed-test-logs
           path: |
